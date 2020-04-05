@@ -1,0 +1,3 @@
+# Ignore all files in build except README.md
+build/*
+!build/README.md

@@ -1,2 +1,2 @@
 # test
-This directory contains soyrce code for running tests.
+This directory contains source code for running tests.
