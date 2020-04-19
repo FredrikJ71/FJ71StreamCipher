@@ -1,4 +1,5 @@
+#include "FJ71StreamCipher/LFSR64Fib.h"
 #include<iostream>
-main() {
-    std::cout << "Testing LFSR\n!"; 
+int main() {
+    std::cout << "Testing LFSR!\n"; 
 }
