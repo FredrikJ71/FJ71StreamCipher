@@ -2,6 +2,7 @@
 #include<iostream>
 #include<vector>
 #include<cstdint>
+#include<chrono>
 
 //testing 4-bit lfsr with c(x)=1+x+x^4
 bool test_Fib_4(){
@@ -93,6 +94,7 @@ bool test_Fib_4(){
     return succeed;
 }
 
+//testing 64-bit lfsr with c(x) = 1 + x^9 + x^34 + x^61 + x^64
 bool test_Fib_64(){
     bool succeed = true;
     const int test_length = 10000; //number of bits to verify
@@ -141,9 +143,44 @@ bool test_Fib_64(){
     return succeed;
 }
 
+
+//measure the time it takes to generate 1MB (1048576Bytes = 16384*8 64-bit words)
+//length 64 c(x) = 1 + x^23 + x^28 + x^31 + x^56 + x^61 + x^64
+void timing_fib(){
+    const int sim_words = 131072;
+    //create the lfsr, let stating state be 1
+    std::vector<int> cx{23,28,311,56,61,64};
+    LFSR64Fib test_lfsr(cx); 
+    //create a vector to store output
+    std::vector<uint64_t> seq(sim_words);
+    //start timer
+    auto start = std::chrono::high_resolution_clock::now();
+    //generate seq
+    for(int i=0;i<sim_words;++i){
+        seq[i] = test_lfsr.next_64();         
+    }  
+    //stop time
+    auto stop = std::chrono::high_resolution_clock::now();
+    //output data (might be needed with optimized compiler flags)
+    std::cout << "Generating 1 MB sequence";
+    for(int i=0;i<sim_words;++i){
+        if(i%4 == 0)
+            std::cout << '\n'; 
+        std::cout << std::hex << seq[i] << std::dec << " " ;
+    } 
+    std::cout << '\n';
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "It took " << duration.count() << " microseconds to generate 1MB\n";
+    double rate = sim_words*64.0;
+    rate /= duration.count(); 
+    std::cout << "This equals " << rate/8 << " MB/s or " << rate << " Mbps\n";
+} 
+
+
 int main() {
     bool all_test = true;
     std::cout << "Testing binary LFSR in Fibonacci mode\n"; 
+    //test a 4-bit lfsr
     std::cout << "4-bit LFSR: ";
     if(test_Fib_4()){
         std::cout << "Passed!\n";
@@ -152,6 +189,7 @@ int main() {
         std::cout << "Failed!\n";
         all_test = false;
     }
+    //test a 64-bit LFSR
     std::cout << "64-bit LFSR: ";
     if(test_Fib_64()){
         std::cout << "Passed!\n";
@@ -165,5 +203,9 @@ int main() {
     }
     else {
         std::cout << "At least one test failed! Verify output to locate error!\n";
+        return 0;
     }
+    //After test of functionality measure time 
+    timing_fib();
+
 }

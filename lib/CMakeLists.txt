@@ -1,6 +1,6 @@
 add_library (LFSR64
     STATIC
-    ../include/FJ71StreamCipher/LFSR64Fib.h
+    FJ71StreamCipher/LFSR64Fib.h
     LFSR64Fib.cpp
 )
 

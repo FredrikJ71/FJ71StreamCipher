@@ -14,65 +14,53 @@
 //note that by definition c_0 is 1 for a binary lfsr
 //hence the feedback polynimial fx should be in the form
 //fx = c_1,c_2, ... c_l where c_l is the least significant bit of fx
-void LFSR64Fib::set_feedback(unsigned int l, unsigned long long fx){
+void LFSR64Fib::set_feedback(unsigned int l, uint64_t fx){
     length = l;
-    mask = 1ULL<<(length-1);
+    set_mask();
     feedback = fx;
 } 
 
 //set the state of the lfsr to s
-void LFSR64Fib::set_state(unsigned long long s) {
+void LFSR64Fib::set_state(uint64_t s) {
     state = s;
 }
 
 //clock the lfsr once and output the bit that will be shifted out
-int LFSR64Fib::next_bit(){
+int LFSR64Fib::next_bit(){    
+    //calculate the bit that should be returned
     int out = (int)state&1;
-    //calculate the feeedback value
-    unsigned long long feed_val = state & feedback;
-    feed_val ^= (feed_val>>1);
-    feed_val ^= (feed_val>>2);
-    feed_val ^= (feed_val>>4);
-    feed_val ^= (feed_val>>8);
-    feed_val ^= (feed_val>>16);
-    feed_val ^= (feed_val>>32);
-    feed_val &= 1;
-    //shift and input feedback bit
-    state >>= 1;
-    if(feed_val){
-        state|=mask; 
-    } 
+    //update lfsr
+    update();
     return out;
 } 
 
 //set the feedback funtion from an array of tap positions, 
 //example s_k = s_k-1 + s_k-4 -> array{1,4}  
-void LFSR64Fib::set_characteristic(std::vector<int> &cx){
+void LFSR64Fib::set_characteristic(const std::vector<int> &cx){
     //start by detecting length and then set mask
-    length = 0;
-    for(int i=0;i < cx.size();++i ){
-        if(cx[i] > length){
-            length = cx[i] ;
-        } 
-    }
-    mask = 1ULL<<(length-1);
+    length = max(cx);
+    set_mask();
     //set feedback
     feedback = 0;
-    for(int i=0;i<cx.size();++i){
-        feedback|=1ULL<<(length-cx[i]); 
+    for(auto &coef : cx){ 
+        feedback|=1ULL<<(length-coef); 
     }
 } 
 
+
 //generate a 64-bit word
-unsigned long long LFSR64Fib::next_64(){
-    unsigned long long out_word = 0;
-    unsigned long long msb = 0x8000000000000000ULL;
+uint64_t LFSR64Fib::next_64(){
+    uint64_t out_word = 0;
+    uint64_t pos_mask  = 1; //start with least significant bit
     for(int i=0;i<64;++i){
-        out_word>>=1;
-        int bit = next_bit();
-        if(bit){
-            out_word|=msb; 
-        } 
+        //store next bit in pos i 
+        if(state&1){
+            out_word|=pos_mask; 
+        }
+        //update pos_mask and lfsr
+        pos_mask <<=1;
+        update();
+
     } 
     return out_word;
 } 
